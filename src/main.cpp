@@ -24,7 +24,6 @@ Waypoint * box;
 void setup() {
   Serial.begin(115200);
   while (!Serial); //Wait for user to open terminal
-  Serial.println("SparkFun Ublox Example");
 
   //Assume that the U-Blox GPS is running at 9600 baud (the default) or at 38400 baud.
   //Loop until we're in sync and then ensure it's at 38400 baud.
@@ -64,19 +63,19 @@ void setup() {
   missionOrigin.lat = 31.89751255;
 
   // mission waypoints here, for now (monkey code don't look at it T^T)
-  
   hydrant = new Waypoint(-111.00231630, 31.89752460, 1, 0);
   tree = new Waypoint(-111.00220190, 31.89768730, 1, 0);
   box = new Waypoint(-111.00203210, 31.89760310, 1, 0);
 
+  // waypoints organized in a loop; this can be changed
   hydrant->next_wp = tree;
   tree->next_wp = box;
   box->next_wp = hydrant;
-
   hydrant->name = "hydrant";
   tree->name = "tree";
   box->name = "box";
 
+  // prev waypoint traverses the list
   prevWaypoint = box;
 
   // initialize current waypoint
@@ -92,30 +91,34 @@ void loop() {
   // this pulls updates from GPS position; needs to be in its own thread because i think it's blocking
   if (timer.check())
   {
+    // update user location first
     myLocationWaypoint.updateLngLat((double)myGPS.getLongitude() / 10000000.0, (double)myGPS.getLatitude() / 10000000.0);
 
+    // calculate distances to track line and next waypoint
     double nextWpDist = calcCartesianDistance(myLocationWaypoint, *prevWaypoint->next_wp);
     double tracklineDist = calcNormalTracklineDistance(*prevWaypoint, *prevWaypoint->next_wp, myLocationWaypoint);
 
+    // logic for expanding LOS enclosure & switching waypoints
     if (tracklineDist > 4.0)
       myLocationWaypoint.rad = tracklineDist + 1.0;
     else
       myLocationWaypoint.rad = 4;
-    
-
     if (nextWpDist < myLocationWaypoint.rad)
       prevWaypoint = prevWaypoint->next_wp;
     
+    // calculating LOS setpoint and finding bearings
     Waypoint losWaypoint = calcLOSSetpointEnclosed(*prevWaypoint, *prevWaypoint->next_wp, myLocationWaypoint);
     double bearing = tinycourse.courseTo(myLocationWaypoint.lat, myLocationWaypoint.lng, losWaypoint.lat, losWaypoint.lng) ;
     double heading = (double)myGPS.getHeading() / 100000.0;
+    
+    // logic for calculating maneuver angle given normalized [0,360) bearing & heading
     double maneuverAngle = bearing - heading;
-
     if (bearing > heading && maneuverAngle > 180)
       maneuverAngle = map(maneuverAngle, 180, 360, -180, 0);
     if (bearing < heading && maneuverAngle < -180)
       maneuverAngle = map(maneuverAngle, -180, -360, 180, 0);
 
+    // print statements
     Serial.print(F(" next WP: ("));
     Serial.print(prevWaypoint->next_wp->name.c_str());
 
@@ -134,7 +137,7 @@ void loop() {
 }
 
 /**
- * commented code hell
+ *  unused print statements (for debugging)
 */
 
 /*
