@@ -97,6 +97,12 @@ void loop() {
     double nextWpDist = calcCartesianDistance(myLocationWaypoint, *prevWaypoint->next_wp);
     double tracklineDist = calcNormalTracklineDistance(*prevWaypoint, *prevWaypoint->next_wp, myLocationWaypoint);
 
+    if (tracklineDist > 4.0)
+      myLocationWaypoint.rad = tracklineDist + 1.0;
+    else
+      myLocationWaypoint.rad = 4;
+    
+
     if (nextWpDist < myLocationWaypoint.rad)
       prevWaypoint = prevWaypoint->next_wp;
     
@@ -110,31 +116,17 @@ void loop() {
     if (bearing < heading && maneuverAngle < -180)
       maneuverAngle = map(maneuverAngle, -180, -360, 180, 0);
 
-    Serial.print(F(" Heading to: ("));
+    Serial.print(F(" next WP: ("));
     Serial.print(prevWaypoint->next_wp->name.c_str());
 
-    Serial.print(F(") | Bearing to los: "));
-    Serial.print(bearing);
-
-    Serial.print(F(" | Maneuver angle: "));
+    Serial.print(F(") | maneuver angle: "));
     Serial.print(maneuverAngle);
 
-    Serial.print(F(" | Dist to trackline: "));
+    Serial.print(F(" | dist to track: "));
     Serial.print(tracklineDist);
 
-    Serial.print(F(" | Waypoint distance: "));
-    Serial.print(nextWpDist);
-
-    Serial.print(F(" | Bearing to waypoint: "));
-    Serial.print(tinycourse.courseTo(myLocationWaypoint.lat, myLocationWaypoint.lng, prevWaypoint->next_wp->lat, prevWaypoint->next_wp->lng));
-
-    
-
-    // Serial.print(F("Lat: "));
-    // Serial.print(myLocationWaypoint.lat, 8);
-
-    // Serial.print(F(" Lng: "));
-    // Serial.print(myLocationWaypoint.lng, 8);
+    Serial.print(F(" | enclosure radius: "));
+    Serial.print(myLocationWaypoint.rad);
 
     Serial.print("                 \r");
   }
@@ -166,9 +158,8 @@ void loop() {
     Serial.print(F(" hydranty: "));
     Serial.print(waypoints[0].y, 8);
 
-    Serial.print(F(" Dist to next waypoint: "));
-    Serial.print(calcCartesianDistance(myLocationWaypoint, waypoints[0]));
-
+    Serial.print(F(" | Waypoint distance: "));
+    Serial.print(nextWpDist);
 
     Serial.print(F(" x: "));
     Serial.print(myLocationWaypoint.lat, 8);
@@ -193,6 +184,15 @@ void loop() {
 
     Serial.print(F(" | my y: "));
     Serial.print(myLocationWaypoint.y);
+
+    Serial.print(F(" | my X: "));
+    Serial.print(myLocationWaypoint.x);
+    Serial.print(F(" | my Y: "));
+    Serial.print(myLocationWaypoint.y);
+    Serial.print(F(" | los X: "));
+    Serial.print(losWaypoint.x);
+    Serial.print(F(" | los Y: "));
+    Serial.print(losWaypoint.y);
 
   Serial.println();
 
